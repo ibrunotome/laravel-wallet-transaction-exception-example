@@ -1,0 +1,50 @@
+version: '3.6'
+services:
+  testingapp:
+    image: ibrunotome/php:8.1-swoole
+    restart: always
+    command: tail -F .gitignore
+    environment:
+      - APP_ENV=testing
+    volumes:
+      - .:/var/www
+    networks:
+      - testing
+    depends_on:
+      - testingpgsql
+      - testingredis
+
+  testingpgsql:
+    image: postgres:14-alpine
+    ports:
+      - '${FORWARD_DB_PORT:-1432}:5432'
+    environment:
+      PGPASSWORD: 'testingexample'
+      POSTGRES_DB: 'testingexample'
+      POSTGRES_USER: 'testingexample'
+      POSTGRES_PASSWORD: 'testingexample'
+    volumes:
+      - 'testingpgsql:/var/lib/postgresql/data'
+    networks:
+      - testing
+    healthcheck:
+      test: [ 'CMD', 'pg_isready', '-q', '-d', '${DB_DATABASE}', '-U', '${DB_USERNAME}' ]
+
+  testingredis:
+    image: redis:6-alpine
+    restart: always
+    ports:
+      - '${FORWARD_REDIS_PORT:-1379}:6379'
+    volumes:
+      - 'testingredis:/data'
+    networks:
+      - testing
+
+networks:
+  testing:
+    driver: bridge
+volumes:
+  testingpgsql:
+    driver: local
+  testingredis:
+    driver: local
