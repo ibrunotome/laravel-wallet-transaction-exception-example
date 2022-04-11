@@ -16,7 +16,7 @@ it('can convert balance successfully', function () {
         ->postJson(route('balance.convert'), [
             'amount' => 5,
         ])
-        ->assertJson(['message' => trans('user.convert_balance.success')]);
+        ->assertJson(['message' => 'Balance successfully converted!']);
 
     expect($user->getWallet(BalanceAs::Worker->value)->balanceFloat)->toBe(number_format(5.0, 8));
     expect($user->getWallet(BalanceAs::Creator->value)->balanceFloat)->toBe(number_format(5.0, 8));
