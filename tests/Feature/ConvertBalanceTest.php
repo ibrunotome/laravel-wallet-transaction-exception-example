@@ -18,8 +18,8 @@ it('can convert balance successfully', function () {
         ])
         ->assertJson(['message' => 'Balance successfully converted!']);
 
-    expect($user->getWallet(BalanceAs::Worker->value)->balanceFloat)->toBe(number_format(5.0, 8));
-    expect($user->getWallet(BalanceAs::Creator->value)->balanceFloat)->toBe(number_format(5.0, 8));
+    expect($user->getWallet(BalanceAs::Worker->value)->balanceFloat)->toBe(number_format(5.0, 2));
+    expect($user->getWallet(BalanceAs::Creator->value)->balanceFloat)->toBe(number_format(5.0, 2));
 });
 
 it('cannot convert balance because insuficient worker balance', function () {
@@ -36,6 +36,6 @@ it('cannot convert balance because insuficient worker balance', function () {
         ->assertStatus(422)
         ->assertJsonValidationErrors(['amount' => 'The amount must not be greater than 10.00']);
 
-    expect($user->getWallet(BalanceAs::Worker->value)->balanceFloat)->toBe(number_format(10.0, 8));
-    expect($user->getWallet(BalanceAs::Creator->value)->balanceFloat)->toBe(number_format(.0, 8));
+    expect($user->getWallet(BalanceAs::Worker->value)->balanceFloat)->toBe(number_format(10.0, 2));
+    expect($user->getWallet(BalanceAs::Creator->value)->balanceFloat)->toBe(number_format(.0, 2));
 });
