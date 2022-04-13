@@ -58,7 +58,7 @@ return [
      * Storage of the state of the balance of wallets.
      */
     'cache' => [
-        'driver' => 'redis',
+        'driver' => env('WALLET_CACHE', 'redis'),
     ],
 
     /**

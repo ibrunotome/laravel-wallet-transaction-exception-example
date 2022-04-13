@@ -1,0 +1,99 @@
+name: pest
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  MEMCACHED_HOST: localhost
+  REDIS_HOST: localhost
+  DB_HOST: localhost
+  REDIS_PORT: 6379
+  MEMCACHED_PORT: 11211
+
+jobs:
+  units:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        php-versions: [8.1]
+        databases: [pgsql]
+        caches: [array, redis, memcached]
+
+    services:
+      redis:
+        image: redis
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+        ports:
+          - 6379:6379
+
+      memcached:
+        image: memcached
+        options: >-
+          --health-cmd "timeout 5 bash -c 'cat < /dev/null > /dev/udp/127.0.0.1/11211'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+        ports:
+          - 11211:11211
+
+      pgsql:
+        image: postgres
+        env:
+          POSTGRES_USER: testingexample
+          POSTGRES_PASSWORD: testingexample
+          POSTGRES_DB: testingexample
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout
+        id: git-checkout
+        uses: actions/checkout@v2
+
+      - name: Setup PHP
+        id: php-install
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-versions }}
+          extensions: mbstring, pgsql, redis, memcached
+          coverage: pcov
+        env:
+          runner: self-hosted
+
+      - name: Validate composer.json and composer.lock
+        id: composer-validate
+        run: composer validate --strict
+
+      - name: Cache Composer packages
+        id: composer-cache
+        uses: actions/cache@v2
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-
+
+      - name: Install dependencies
+        id: composer-dependencies
+        run: composer install --prefer-dist --no-progress
+
+      - name: Run test suite
+        id: unit-run
+        run: |
+          php artisan test --env=prod
+        env:
+          WALLET_CACHE: ${{ matrix.caches }}
+          DB_CONNECTION: ${{ matrix.databases }}

@@ -14,4 +14,4 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::post('/balance/convert', ConvertBalanceController::class)->name('convert.balance');
+Route::post('/balance/convert', ConvertBalanceController::class)->name('balance.convert');
